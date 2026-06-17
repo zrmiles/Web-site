@@ -18,6 +18,17 @@
   }
 }
 
+/* On phones the three CTAs no longer fit on one line and the labels truncate.
+   Give "Запросить цену" its own full-width row, then pair "В корзину" + favourite. */
+@media (max-width: 560px) {
+  .product-actions { flex-wrap: wrap; gap: 0.6rem; }
+  .product-price-request { flex: 1 1 100%; order: 1; }
+  .product-add-cart { flex: 1 1 auto; order: 2; }
+  .product-fav-btn { order: 3; }
+  .product-price-request,
+  .product-add-cart { min-height: 52px; white-space: nowrap; }
+}
+
 /* Gallery */
 .product-gallery-main {
   border-radius: 12px;

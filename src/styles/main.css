@@ -339,8 +339,13 @@ ul, ol { list-style: none; }
   grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
   gap: var(--space-6);
 }
-@media (max-width: 640px) {
-  .product-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--space-4); }
+@media (max-width: 900px) {
+  .product-grid { grid-template-columns: repeat(2, 1fr); gap: var(--space-4); }
+}
+/* Phones: single column so cards get full width and the "Подробнее" / "В корзину"
+   buttons stop clipping. */
+@media (max-width: 540px) {
+  .product-grid { grid-template-columns: 1fr; }
 }
 
 /* ===== PRODUCT CARD ===== */
@@ -589,8 +594,21 @@ ul, ol { list-style: none; }
 }
 .cart-item__remove:hover { color: var(--color-danger); }
 @media (max-width: 640px) {
-  .cart-item { flex-wrap: wrap; }
-  .cart-item__img { width: 70px; height: 52px; }
+  /* Phones: the row collides (variant text overlaps the stepper). Lay the card
+     out as a grid — image on the left, title + remove on top, stepper below. */
+  .cart-item {
+    display: grid;
+    grid-template-columns: 72px 1fr auto;
+    grid-template-areas:
+      "img info remove"
+      "img qty  qty";
+    gap: var(--space-2) var(--space-4);
+    align-items: center;
+  }
+  .cart-item__img { grid-area: img; width: 72px; height: 72px; align-self: start; }
+  .cart-item__info { grid-area: info; }
+  .cart-item__qty { grid-area: qty; justify-self: start; }
+  .cart-item__remove { grid-area: remove; align-self: start; }
 }
 
 /* ===== FORM ===== */
