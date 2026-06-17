@@ -7,9 +7,10 @@
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:client": "vite",
     "dev:server": "tsx watch --env-file=.env server/index.ts",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && tsc -p tsconfig.server.json && vite build",
     "preview": "vite preview",
-    "server": "tsx --env-file=.env server/index.ts",
+    "server": "tsx server/index.ts",
+    "start": "node dist-server/index.js",
     "dev:all": "concurrently \"npm run server\" \"npm run dev\"",
     "verify": "npm run build && node scripts/verify-project.mjs"
   },

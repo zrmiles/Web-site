@@ -9,7 +9,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import db, { bcrypt, SALT_ROUNDS } from './db.js';
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET || '';
 if (!JWT_SECRET || JWT_SECRET.length < 32) {
   console.error('FATAL: JWT_SECRET must be at least 32 characters. Set it in .env.');
   process.exit(1);
@@ -22,6 +22,7 @@ const IS_PROD = process.env.NODE_ENV === 'production';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsDir = path.join(__dirname, '..', 'uploads');
+const clientDistDir = path.join(__dirname, '..', 'dist');
 
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
@@ -181,7 +182,7 @@ function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
   const token = getRequestToken(req);
   if (!token) return res.status(401).json({ error: 'Требуется авторизация' });
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as { id: number };
+    const payload = jwt.verify(token, JWT_SECRET) as unknown as { id: number };
     const user = db.prepare('SELECT id, login, name, phone, role FROM users WHERE id = ?').get(payload.id) as AuthRequest['user'] | undefined;
     if (!user) return res.status(401).json({ error: 'Пользователь не найден' });
     req.user = user;
@@ -203,7 +204,7 @@ function optionalAuth(req: AuthRequest, _res: Response, next: NextFunction) {
   const token = getRequestToken(req);
   if (token) {
     try {
-      const payload = jwt.verify(token, JWT_SECRET) as { id: number };
+      const payload = jwt.verify(token, JWT_SECRET) as unknown as { id: number };
       const user = db.prepare('SELECT id, login, name, phone, role FROM users WHERE id = ?').get(payload.id) as AuthRequest['user'] | undefined;
       if (user) req.user = user;
     } catch {
@@ -568,6 +569,19 @@ app.put('/api/favorites', requireAuth, writeLimiter, (req: AuthRequest, res) => 
   const rows = db.prepare('SELECT product_id FROM favorites WHERE user_id = ? ORDER BY id').all(req.user!.id) as { product_id: number }[];
   res.json(rows.map(row => row.product_id));
 });
+
+if (IS_PROD && fs.existsSync(clientDistDir)) {
+  app.use(express.static(clientDistDir, {
+    index: false,
+    setHeaders: res => {
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+    },
+  }));
+
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(clientDistDir, 'index.html'));
+  });
+}
 
 app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {
   if (res.headersSent) return next(err);
